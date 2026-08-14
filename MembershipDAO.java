@@ -49,4 +49,24 @@ public class MembershipDAO {
 
         return total;
     }
+
+    public double getTotalRevenue() {
+
+        double total = 0;
+        String sql = "SELECT SUM(price) FROM memberships";
+
+        try {
+            PreparedStatement statement = connection.prepareStatement(sql);
+
+            ResultSet result = statement.executeQuery();
+            if (result.next()) {
+                total = result.getDouble(1);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error calculating total revenue.");
+            System.out.println(e.getMessage());
+        }
+
+        return total;
+    }
 }
