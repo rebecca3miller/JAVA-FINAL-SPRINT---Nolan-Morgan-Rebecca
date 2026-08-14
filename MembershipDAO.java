@@ -28,4 +28,25 @@ public class MembershipDAO {
             System.out.println(e.getMessage());
         }
     }
+
+    public double getTotalExpenses(int userId) {
+
+        double total = 0;
+        String sql = "SELECT SUM(price) FROM memberships WHERE user_id = ?";
+
+        try {
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setInt(1, userId);
+
+            ResultSet result = statement.executeQuery();
+            if (result.next()) {
+                total = result.getDouble(1);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error calculating membership expenses.");
+            System.out.println(e.getMessage());
+        }
+
+        return total;
+    }
 }
