@@ -1,13 +1,12 @@
 package user;
 
 import database.DatabaseConnection;
+import logger.CustomLogger;
 
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Provides database access operations for users.
@@ -15,7 +14,6 @@ import java.util.logging.Logger;
 public class UserDAO {
 
     /** Logger used to record database operation errors. */
-    private static final Logger LOGGER = UserLogger.getLogger();
     /** Database connection used for user operations. */
     private final Connection connection;
 
@@ -45,7 +43,7 @@ public class UserDAO {
             preparedStatement.setString(6, user.getRole());
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Database transaction error while creating a user.", e);
+            CustomLogger.logError("Database transaction error while creating a user.", e);
             throw new IOException("Error saving new user", e);
         }
     }
@@ -74,7 +72,7 @@ public class UserDAO {
                 users.add(user);
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Database transaction error while retrieving users.", e);
+            CustomLogger.logError("Database transaction error while retrieving users.", e);
             throw new IOException("Error retrieving users", e);
         }
         return users;
@@ -107,7 +105,7 @@ public class UserDAO {
                 }
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Database transaction error while retrieving a user by username.", e);
+            CustomLogger.logError("Database transaction error while retrieving a user by username.", e);
             throw new IOException("Error retrieving user by username", e);
         }
     }
@@ -139,7 +137,7 @@ public class UserDAO {
                 }
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Database transaction error while retrieving a user by ID.", e);
+            CustomLogger.logError("Database transaction error while retrieving a user by ID.", e);
             throw new IOException("Error retrieving user by ID", e);
         }
     }
@@ -162,7 +160,7 @@ public class UserDAO {
             preparedStatement.setInt(7, user.getId());
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Database transaction error while updating a user.", e);
+            CustomLogger.logError("Database transaction error while updating a user.", e);
             throw new IOException("Error updating user", e);
         }
     }
@@ -179,7 +177,7 @@ public class UserDAO {
             preparedStatement.setInt(1, id);
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Database transaction error while deleting a user.", e);
+            CustomLogger.logError("Database transaction error while deleting a user.", e);
             throw new IOException("Error deleting user", e);
         }
     }

@@ -2,3 +2,6 @@ Notes.md
 
 # Java compiled classes
 *.class
+
+# Maven build output
+target/

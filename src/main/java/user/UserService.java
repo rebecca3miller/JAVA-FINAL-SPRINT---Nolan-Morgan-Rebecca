@@ -1,18 +1,17 @@
 package user;
 
+import logger.CustomLogger;
+import org.mindrot.BCrypt;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Provides user registration, authentication, and account management services.
  */
 public class UserService {
 
-    /** Logger used to record user service events. */
-    private static final Logger LOGGER = UserLogger.getLogger();
     /** Roles allowed during user registration. */
     private static final Set<String> ALLOWED_ROLES = Set.of("Admin", "Trainer", "Member");
     /** Data access object used for user database operations. */
@@ -40,7 +39,7 @@ public class UserService {
         if (user != null && BCrypt.checkPassword(password, user.getPassword())) {
             return user;
         }
-        LOGGER.warning("Failed login attempt for username: " + username);
+        CustomLogger.logInfo("Failed login attempt for username: " + username);
         throw new IOException("Invalid username or password.");
     }
 
@@ -51,6 +50,18 @@ public class UserService {
      * @throws IOException if the registration details are invalid or the user cannot be created
      */
     public void createUser(User user) throws IOException {
+        throw new IOException("Only Admin users can register new users.");
+    }
+
+    /**
+     * Creates a new user at the request of an administrator.
+     *
+     * @param requestingUser the signed-in administrator
+     * @param user the user to create
+     * @throws IOException if the requester is unauthorized or the user cannot be created
+     */
+    public void createUser(User requestingUser, User user) throws IOException {
+        requireAdmin(requestingUser, "register new users");
         try {
             validateRegistration(user);
             if (userDAO.getUserByUsername(user.getUsername()) != null) {
@@ -58,9 +69,10 @@ public class UserService {
             }
             user.setPassword(BCrypt.hashPassword(user.getPassword()));
             userDAO.createUser(user);
+            CustomLogger.logInfo("Admin registered user: " + user.getUsername());
             System.out.println("User created successfully.");
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error creating a user.", e);
+            CustomLogger.logError("Error creating a user.", e);
             throw new IOException("Error creating user.", e);
         }
     }
@@ -90,10 +102,10 @@ public class UserService {
             userToUpdate.setPassword(BCrypt.hashPassword(newPassword));
             userDAO.updateUser(userToUpdate);
             if (isAdmin && requestingUser.getId() != userId) {
-                LOGGER.info("Admin override: changed password for user ID " + userId);
+                CustomLogger.logInfo("Admin override: changed password for user ID " + userId);
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error changing a password.", e);
+            CustomLogger.logError("Error changing a password.", e);
             throw new IOException("Error changing password.", e);
         }
     }
@@ -112,7 +124,7 @@ public class UserService {
             users.forEach(user -> user.setPassword(null));
             return users;
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving users.", e);
+            CustomLogger.logError("Error retrieving users.", e);
             throw new IOException("Error retrieving users.", e);
         }
     }
@@ -128,7 +140,7 @@ public class UserService {
         try {
             return userDAO.getUserByUsername(username);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving a user by username.", e);
+            CustomLogger.logError("Error retrieving a user by username.", e);
             throw new IOException("Error retrieving user by username.", e);
         }
     }
@@ -144,7 +156,7 @@ public class UserService {
         try {
             return userDAO.getUserById(id);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving a user by ID.", e);
+            CustomLogger.logError("Error retrieving a user by ID.", e);
             throw new IOException("Error retrieving user by ID.", e);
         }
     }
@@ -177,7 +189,7 @@ public class UserService {
             if (!isAdmin) {
                 userToUpdate.setRole(requestingUser.getRole());
             } else if (requestingUser.getId() != userToUpdate.getId()) {
-                LOGGER.info("Admin override: updated user ID " + userToUpdate.getId());
+                CustomLogger.logInfo("Admin override: updated user ID " + userToUpdate.getId());
             }
             String password = userToUpdate.getPassword();
             if (isBlank(password)) {
@@ -188,7 +200,7 @@ public class UserService {
             userDAO.updateUser(userToUpdate);
             System.out.println("User updated successfully.");
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error updating a user.", e);
+            CustomLogger.logError("Error updating a user.", e);
             throw new IOException("Error updating user.", e);
         }
     }
@@ -202,20 +214,12 @@ public class UserService {
      */
     public void deleteUser(User requestingUser, int id) throws IOException {
         try {
-            if (requestingUser == null) {
-                throw new IOException("A signed-in user is required to delete an account.");
-            }
-            boolean isAdmin = "Admin".equals(requestingUser.getRole());
-            if (!isAdmin && requestingUser.getId() != id) {
-                throw new IOException("Users can only delete their own account.");
-            }
-            if (isAdmin && requestingUser.getId() != id) {
-                LOGGER.info("Admin override: deleted user ID " + id);
-            }
+            requireAdmin(requestingUser, "delete users");
             userDAO.deleteUser(id);
+            CustomLogger.logInfo("Admin override: deleted user ID " + id);
             System.out.println("User deleted successfully.");
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error deleting a user.", e);
+            CustomLogger.logError("Error deleting a user.", e);
             throw new IOException("Error deleting user.", e);
         }
     }
@@ -231,7 +235,6 @@ public class UserService {
         if (requestingUser == null || !"Admin".equals(requestingUser.getRole())) {
             throw new IOException("Only Admin users can " + action + ".");
         }
-        LOGGER.info("Admin override: viewed all users.");
     }
 
     /**
