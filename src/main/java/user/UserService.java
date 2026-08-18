@@ -108,7 +108,9 @@ public class UserService {
     public List<User> getAllUsers(User requestingUser) throws IOException {
         try {
             requireAdmin(requestingUser, "view all users");
-            return userDAO.getAllUsers();
+            List<User> users = userDAO.getAllUsers();
+            users.forEach(user -> user.setPassword(null));
+            return users;
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error retrieving users.", e);
             throw new IOException("Error retrieving users.", e);
@@ -159,14 +161,29 @@ public class UserService {
             if (requestingUser == null || userToUpdate == null) {
                 throw new IOException("A signed-in user and an updated user are required.");
             }
+            validateProfile(userToUpdate);
             boolean isAdmin = "Admin".equals(requestingUser.getRole());
             if (!isAdmin && requestingUser.getId() != userToUpdate.getId()) {
                 throw new IOException("Users can only update their own account.");
+            }
+            User existingUser = userDAO.getUserById(userToUpdate.getId());
+            if (existingUser == null) {
+                throw new IOException("User not found.");
+            }
+            User userWithSameUsername = userDAO.getUserByUsername(userToUpdate.getUsername());
+            if (userWithSameUsername != null && userWithSameUsername.getId() != userToUpdate.getId()) {
+                throw new IOException("That username is already in use.");
             }
             if (!isAdmin) {
                 userToUpdate.setRole(requestingUser.getRole());
             } else if (requestingUser.getId() != userToUpdate.getId()) {
                 LOGGER.info("Admin override: updated user ID " + userToUpdate.getId());
+            }
+            String password = userToUpdate.getPassword();
+            if (isBlank(password)) {
+                userToUpdate.setPassword(existingUser.getPassword());
+            } else if (!isBCryptHash(password)) {
+                userToUpdate.setPassword(BCrypt.hashPassword(password));
             }
             userDAO.updateUser(userToUpdate);
             System.out.println("User updated successfully.");
@@ -227,9 +244,22 @@ public class UserService {
         if (user == null) {
             throw new IOException("User registration details are required.");
         }
-        if (isBlank(user.getUsername()) || isBlank(user.getPassword()) || isBlank(user.getEmail())
+        if (isBlank(user.getPassword())) {
+            throw new IOException("A password is required.");
+        }
+        validateProfile(user);
+    }
+
+    /**
+     * Validates the non-password details shared by registration and account updates.
+     *
+     * @param user the user details to validate
+     * @throws IOException if any profile detail is invalid
+     */
+    private void validateProfile(User user) throws IOException {
+        if (isBlank(user.getUsername()) || isBlank(user.getEmail())
                 || isBlank(user.getPhoneNumber()) || isBlank(user.getAddress())) {
-            throw new IOException("Username, password, email, phone number, and address are required.");
+            throw new IOException("Username, email, phone number, and address are required.");
         }
         if (!user.getEmail().matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
             throw new IOException("Enter a valid email address.");
@@ -240,6 +270,16 @@ public class UserService {
         if (!ALLOWED_ROLES.contains(user.getRole())) {
             throw new IOException("Role must be Admin, Trainer, or Member.");
         }
+    }
+
+    /**
+     * Checks whether a password is already in BCrypt's encoded format.
+     *
+     * @param password the password value to inspect
+     * @return true when the value appears to be a BCrypt hash
+     */
+    private boolean isBCryptHash(String password) {
+        return password != null && password.matches("^\\$2[aby]?\\$[0-9]{2}\\$.*");
     }
 
     /**
