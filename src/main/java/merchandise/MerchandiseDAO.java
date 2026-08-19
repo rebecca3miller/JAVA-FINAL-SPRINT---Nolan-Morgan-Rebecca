@@ -1,8 +1,6 @@
 
 package merchandise;
 
-package merchandise;
-
 import logger.CustomLogger;
 
 import java.io.IOException;

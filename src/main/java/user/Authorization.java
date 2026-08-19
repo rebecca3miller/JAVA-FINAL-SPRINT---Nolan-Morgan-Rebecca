@@ -17,8 +17,6 @@ public final class Authorization {
                     "restock_merchandise",
                     "view_inventory",
                     "manage_classes",
-                    "purchase_membership",
-                    "browse_merchandise",
                     "export_reports"
             ),
             "Trainer", List.of(

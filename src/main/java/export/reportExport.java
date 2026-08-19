@@ -1,7 +1,6 @@
 package export;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,15 +42,26 @@ public class reportExport {
             System.err.println("Error creating reports directory: " + e.getMessage());
             return;
         }
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(reportFile.toFile()));
+        try (BufferedWriter writer = Files.newBufferedWriter(reportFile);
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
+            double totalInventoryValue = 0;
+            writer.write("Merchandise Inventory Report");
+            writer.newLine();
+            writer.write("========================================");
+            writer.newLine();
             while (resultSet.next()) {
                 String itemName = resultSet.getString("name");
                 double price = resultSet.getDouble("price");
                 int stock = resultSet.getInt("stock");
-                writer.write(String.format("Item: %s, Price: %.2f, Stock: %d%n", itemName, price, stock));
+                double itemValue = price * stock;
+                totalInventoryValue += itemValue;
+                writer.write(String.format("Item: %s, Price: $%.2f, Stock: %d, Value: $%.2f%n",
+                        itemName, price, stock, itemValue));
             }
+            writer.write("========================================");
+            writer.newLine();
+            writer.write(String.format("Total inventory valuation: $%.2f%n", totalInventoryValue));
 
             System.out.println("Merchandise report exported successfully to " + reportFile);
             CustomLogger.logInfo("Admin override: " + requestingUser.getUsername() + " exported the merchandise report.");
@@ -68,7 +78,11 @@ public class reportExport {
             System.err.println("Access denied. Admin role required.");
             return;
         }
-        String sql = "SELECT * FROM memberships";
+        String sql = "SELECT membership_id, user_id, membership_type, price, purchased_at "
+            + "FROM memberships "
+            + "WHERE purchased_at >= date_trunc('year', CURRENT_DATE) "
+            + "AND purchased_at < date_trunc('year', CURRENT_DATE) + INTERVAL '1 year' "
+            + "ORDER BY purchased_at, membership_id";
         Path reportFile;
         try {
             Files.createDirectories(REPORTS_DIR);
@@ -78,15 +92,27 @@ public class reportExport {
             System.err.println("Error creating reports directory: " + e.getMessage());
             return;
         }
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(reportFile.toFile()));
+        try (BufferedWriter writer = Files.newBufferedWriter(reportFile);
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
+            double totalRevenue = 0;
+            writer.write("Membership Revenue Report");
+            writer.newLine();
+            writer.write("Current calendar year");
+            writer.newLine();
+            writer.write("========================================");
+            writer.newLine();
             while (resultSet.next()) {
                 int userId = resultSet.getInt("user_id");
                 String membershipType = resultSet.getString("membership_type");
                 double price = resultSet.getDouble("price");
-                writer.write(String.format("User ID: %d, Membership Type: %s, Price: %.2f%n", userId, membershipType, price));
+                totalRevenue += price;
+                writer.write(String.format("User ID: %d, Membership Type: %s, Price: $%.2f, Purchased: %s%n",
+                        userId, membershipType, price, resultSet.getTimestamp("purchased_at")));
             }
+            writer.write("========================================");
+            writer.newLine();
+            writer.write(String.format("Total annual revenue: $%.2f%n", totalRevenue));
 
             System.out.println("Membership report exported successfully to " + reportFile);
             CustomLogger.logInfo("Admin override: " + requestingUser.getUsername() + " exported the membership report.");

@@ -1,8 +1,6 @@
 
 package workout;
 
-package workout;
-
 import logger.CustomLogger;
 
 import java.io.IOException;
