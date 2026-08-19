@@ -1,7 +1,7 @@
 package user;
 
 import logger.CustomLogger;
-import org.mindrot.BCrypt;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.io.IOException;
 import java.util.List;
@@ -32,7 +32,7 @@ public class UserService {
      */
     public User authenticateUser(String username, String password) throws IOException {
         User user = userDAO.getUserByUsername(username);
-        if (user != null && BCrypt.checkPassword(password, user.getPassword())) {
+        if (user != null && BCrypt.checkpw(password, user.getPassword())) {
             return user;
         }
         CustomLogger.logInfo("Failed login attempt for username: " + username);
@@ -51,7 +51,7 @@ public class UserService {
             if (userDAO.getUserByUsername(user.getUsername()) != null) {
                 throw new IOException("That username is already in use.");
             }
-            user.setPassword(BCrypt.hashPassword(user.getPassword()));
+            user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
             userDAO.createUser(user);
             CustomLogger.logInfo("User registered: " + user.getUsername());
             System.out.println("Registration successful.");

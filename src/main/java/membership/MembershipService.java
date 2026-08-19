@@ -1,3 +1,6 @@
+
+package membership;
+
 import user.Authorization;
 import user.User;
 

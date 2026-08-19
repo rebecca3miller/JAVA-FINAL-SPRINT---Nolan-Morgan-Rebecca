@@ -1,4 +1,6 @@
 
+package workout;
+
 import user.Authorization;
 import user.User;
 
