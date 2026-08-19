@@ -1,18 +1,20 @@
 public class Merchandise {
-    
+
     private int merchandiseId;
     private String name;
     private String description;
+    private String itemType;
     private double price;
     private int stock;
 
     public Merchandise() {
     }
 
-    public Merchandise(int merchandiseId, String name, String description, double price, int stock) {
+    public Merchandise(int merchandiseId, String name, String description, String itemType, double price, int stock) {
         this.merchandiseId = merchandiseId;
         this.name = name;
         this.description = description;
+        this.itemType = itemType;
         this.price = price;
         this.stock = stock;
     }
@@ -41,6 +43,14 @@ public class Merchandise {
         this.description = description;
     }
 
+    public String getItemType() {
+        return itemType;
+    }
+
+    public void setItemType(String itemType) {
+        this.itemType = itemType;
+    }
+
     public double getPrice() {
         return price;
     }
@@ -63,6 +73,7 @@ public class Merchandise {
                 "merchandiseId=" + merchandiseId +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
+                ", itemType='" + itemType + '\'' +
                 ", price=" + price +
                 ", stock=" + stock +
                 '}';
