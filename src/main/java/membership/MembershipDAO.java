@@ -8,7 +8,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MembershipDAO {
 
@@ -34,6 +36,23 @@ public class MembershipDAO {
             CustomLogger.logError("Database transaction error while purchasing membership.", e);
             throw new IOException("Error purchasing membership.", e);
         }
+    }
+
+    public Map<String, Double> getMembershipPlans() throws IOException {
+        Map<String, Double> plans = new LinkedHashMap<>();
+        String sql = "SELECT membership_type, price FROM membership_plans ORDER BY plan_id";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet result = statement.executeQuery()) {
+            while (result.next()) {
+                plans.put(result.getString("membership_type"), result.getDouble("price"));
+            }
+        } catch (SQLException e) {
+            CustomLogger.logError("Database transaction error while retrieving membership plans.", e);
+            throw new IOException("Error retrieving membership plans.", e);
+        }
+
+        return plans;
     }
 
     public double getTotalExpenses(int userId) throws IOException {

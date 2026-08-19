@@ -8,11 +8,6 @@ import java.util.Map;
 
 public class MembershipService {
 
-    private static final Map<String, Double> MEMBERSHIP_PRICES = Map.of(
-            "Monthly", 49.99,
-            "Annual", 499.99
-    );
-
     private final MembershipDAO membershipDAO;
 
     public MembershipService(MembershipDAO membershipDAO) {
@@ -24,12 +19,16 @@ public class MembershipService {
         if (membership == null || membership.getUserId() != requestingUser.getId()) {
             throw new IOException("A membership purchase must belong to the signed-in user.");
         }
-        Double price = MEMBERSHIP_PRICES.get(membership.getMembershipType());
+        Double price = getAvailableMembershipPlans().get(membership.getMembershipType());
         if (price == null) {
-            throw new IOException("Choose Monthly or Annual for the membership type.");
+            throw new IOException("Choose one of the available membership plans.");
         }
         membership.setPrice(price);
         membershipDAO.addMembership(membership);
+    }
+
+    public Map<String, Double> getAvailableMembershipPlans() throws IOException {
+        return membershipDAO.getMembershipPlans();
     }
 
     public void displayUserExpenses(User requestingUser, int userId) throws IOException {

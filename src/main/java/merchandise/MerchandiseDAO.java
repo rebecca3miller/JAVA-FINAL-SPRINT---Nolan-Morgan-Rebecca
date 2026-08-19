@@ -81,6 +81,23 @@ public class MerchandiseDAO {
         }
     }
 
+    public void updatePrice(int merchandiseId, double newPrice) throws IOException {
+        if (newPrice < 0) {
+            throw new IOException("Price cannot be negative.");
+        }
+        String sql = "UPDATE merchandise SET price = ? WHERE merchandise_id = ?";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDouble(1, newPrice);
+            statement.setInt(2, merchandiseId);
+            statement.executeUpdate();
+            System.out.println("Price updated successfully.");
+        } catch (SQLException e) {
+            CustomLogger.logError("Database transaction error while updating merchandise price.", e);
+            throw new IOException("Error updating merchandise price.", e);
+        }
+    }
+
     public double getInventoryValue() throws IOException {
         double total = 0;
         String sql = "SELECT COALESCE(SUM(price * stock), 0) FROM merchandise";

@@ -164,11 +164,14 @@ public class UserMain {
                 case "add_merchandise":
                     addMerchandiseMenu(currentUser, merchandiseService, scanner);
                     break;
+                case "update_merchandise_price":
+                    updateMerchandisePriceMenu(currentUser, merchandiseService, scanner);
+                    break;
                 case "restock_merchandise":
                     restockMerchandiseMenu(currentUser, merchandiseService, scanner);
                     break;
                 case "view_inventory":
-                    System.out.println("Inventory value: $" + merchandiseService.getInventoryValue(currentUser));
+                    merchandiseService.displayInventory(currentUser);
                     break;
                 case "manage_classes":
                     workoutClassMenu(currentUser, workoutClassService, scanner);
@@ -180,7 +183,7 @@ public class UserMain {
                     purchaseMembershipMenu(currentUser, membershipService, scanner);
                     break;
                 case "browse_merchandise":
-                    merchandiseService.browseMerchandise(currentUser);
+                    merchandiseMenu(currentUser, merchandiseService, scanner);
                     break;
                 case "browse_classes":
                     workoutClassService.browseClasses(currentUser);
@@ -221,7 +224,9 @@ public class UserMain {
     }
 
     private static void purchaseMembershipMenu(User currentUser, MembershipService membershipService, Scanner scanner) throws IOException {
-        System.out.println("Membership plans: Monthly ($49.99), Annual ($499.99)");
+        System.out.println("Membership plans:");
+        membershipService.getAvailableMembershipPlans().forEach((type, price) ->
+            System.out.printf("%s ($%.2f)%n", type, price));
         System.out.print("Membership type: ");
         String membershipType = scanner.nextLine();
 
@@ -229,6 +234,28 @@ public class UserMain {
         membership.setUserId(currentUser.getId());
         membership.setMembershipType(membershipType);
         membershipService.purchaseMembership(currentUser, membership);
+    }
+
+    private static void merchandiseMenu(User currentUser, MerchandiseService merchandiseService, Scanner scanner) throws IOException {
+        merchandiseService.browseMerchandise(currentUser);
+        System.out.print("Would you like to purchase merchandise? (y/n): ");
+        if (!scanner.nextLine().trim().equalsIgnoreCase("y")) {
+            return;
+        }
+
+        System.out.print("Merchandise ID: ");
+        int merchandiseId = readInt(scanner);
+        System.out.print("Quantity: ");
+        int quantity = readInt(scanner);
+        merchandiseService.purchaseMerchandise(currentUser, merchandiseId, quantity);
+    }
+
+    private static void updateMerchandisePriceMenu(User currentUser, MerchandiseService merchandiseService, Scanner scanner) throws IOException {
+        System.out.print("Merchandise ID: ");
+        int merchandiseId = readInt(scanner);
+        System.out.print("New price: ");
+        double newPrice = Double.parseDouble(scanner.nextLine());
+        merchandiseService.updatePrice(currentUser, merchandiseId, newPrice);
     }
 
     private static void exportReportsMenu(User currentUser, reportExport reportExportService, Scanner scanner) throws IOException {
