@@ -25,15 +25,12 @@ public final class Authorization {
                     "manage_classes",
                     "view_own_classes",
                     "purchase_membership",
-                    "browse_merchandise"
-            ),
+                    "browse_merchandise"),
             "Member", List.of(
                     "browse_classes",
                     "view_own_expenses",
                     "purchase_membership",
-                    "browse_merchandise"
-            )
-    );
+                    "browse_merchandise"));
 
         private static final Map<String, String> ACTION_LABELS = Map.ofEntries(
             Map.entry("view_users", "View all users & contact info"),
