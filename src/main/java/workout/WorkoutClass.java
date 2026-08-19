@@ -1,3 +1,5 @@
+package workout;
+
 public class WorkoutClass {
     
 

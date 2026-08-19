@@ -1,4 +1,6 @@
 
+package merchandise;
+
 import user.Authorization;
 import user.User;
 

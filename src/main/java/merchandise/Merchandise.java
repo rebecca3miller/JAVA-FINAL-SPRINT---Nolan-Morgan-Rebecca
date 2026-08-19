@@ -1,3 +1,5 @@
+package merchandise;
+
 public class Merchandise {
 
     private int merchandiseId;

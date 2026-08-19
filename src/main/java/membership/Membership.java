@@ -1,3 +1,5 @@
+package membership;
+
 public class Membership {
     private int membershipId;
     private int userId;

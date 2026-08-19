@@ -1,9 +1,17 @@
+package membership;
+
 import user.Authorization;
 import user.User;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class MembershipService {
+
+    private static final Map<String, Double> MEMBERSHIP_PRICES = Map.of(
+            "Monthly", 49.99,
+            "Annual", 499.99
+    );
 
     private final MembershipDAO membershipDAO;
 
@@ -13,6 +21,14 @@ public class MembershipService {
 
     public void purchaseMembership(User requestingUser, Membership membership) throws IOException {
         Authorization.requireRole(requestingUser, "purchase a gym membership", "Trainer", "Member");
+        if (membership == null || membership.getUserId() != requestingUser.getId()) {
+            throw new IOException("A membership purchase must belong to the signed-in user.");
+        }
+        Double price = MEMBERSHIP_PRICES.get(membership.getMembershipType());
+        if (price == null) {
+            throw new IOException("Choose Monthly or Annual for the membership type.");
+        }
+        membership.setPrice(price);
         membershipDAO.addMembership(membership);
     }
 

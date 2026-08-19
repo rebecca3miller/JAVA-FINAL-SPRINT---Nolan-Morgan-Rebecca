@@ -14,10 +14,12 @@ public final class Authorization {
                     "delete_users",
                     "view_revenue",
                     "add_merchandise",
+                    "restock_merchandise",
                     "view_inventory",
                     "manage_classes",
                     "purchase_membership",
-                    "browse_merchandise"
+                    "browse_merchandise",
+                    "export_reports"
             ),
             "Trainer", List.of(
                     "manage_classes",
@@ -33,19 +35,21 @@ public final class Authorization {
             )
     );
 
-    private static final Map<String, String> ACTION_LABELS = Map.of(
-            "view_users", "View all users & contact info",
-            "delete_users", "Delete users from the system",
-            "view_revenue", "Track total annual membership revenue",
-            "add_merchandise", "Add new merchandise items & set prices",
-            "view_inventory", "View merchandise stock & total valuation",
-            "manage_classes", "Create, update, and delete workout classes",
-            "view_own_classes", "View list of self-assigned classes",
-            "purchase_membership", "Purchase a gym membership",
-            "browse_merchandise", "View merchandise available for purchase",
-            "browse_classes", "Browse all available workout classes",
-            "view_own_expenses", "View personal total membership expenses"
-    );
+        private static final Map<String, String> ACTION_LABELS = Map.ofEntries(
+            Map.entry("view_users", "View all users & contact info"),
+            Map.entry("delete_users", "Delete users from the system"),
+            Map.entry("view_revenue", "Track total annual membership revenue"),
+            Map.entry("add_merchandise", "Add new merchandise items & set prices"),
+            Map.entry("restock_merchandise", "Restock merchandise inventory"),
+            Map.entry("view_inventory", "View merchandise stock & total valuation"),
+            Map.entry("manage_classes", "Create, update, and delete workout classes"),
+            Map.entry("view_own_classes", "View list of self-assigned classes"),
+            Map.entry("purchase_membership", "Purchase a gym membership"),
+            Map.entry("browse_merchandise", "View merchandise available for purchase"),
+            Map.entry("browse_classes", "Browse all available workout classes"),
+            Map.entry("view_own_expenses", "View personal total membership expenses"),
+            Map.entry("export_reports", "Export Reports to File")
+        );
 
     private Authorization() {
     }
