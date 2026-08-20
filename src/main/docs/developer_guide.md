@@ -49,6 +49,10 @@ To run the project:
 4. Install and configure PostgreSQL.
 5. Run the provided SQL setup script to create the required database tables.
 6. Configure the database credentials used by the Java application.
+    Set:
+        GYM_DB_URL=jdbc:postgresql://localhost:5432/gym_management
+        GYM_DB_USER=...
+        GYM_DB_PASSWORD=...
 7. Make sure all required dependencies are installed.
 8. Build the project using Maven if Maven is being used.
 9. Run the application's main Java file.
