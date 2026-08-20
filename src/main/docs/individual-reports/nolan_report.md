@@ -87,7 +87,6 @@ I mainly used AI in figuring out how to check for folder existence and create on
 
 - How do I check whether a reports folder exists in Java?
 - How do I create the reports folder if it does not exist?
-- How can I write database results to a human-readable text file in Java?
 - Why should a BufferedWriter be closed after writing a file?
 - How does try-with-resources close Java file and database resources?
 
