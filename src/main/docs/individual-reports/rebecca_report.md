@@ -124,5 +124,58 @@ I also learned that exporting a report involves more than just creating a text f
 
 ### Code Showcase
 
+The method I used to generate and write the report file is shown below:
 
+public void getMembershipReport(User requestingUser) {
+        try {
+            Authorization.requireRole(requestingUser, "Export membership report", "Admin");
+        } catch (IOException e) {
+            System.err.println("Access denied. Admin role required.");
+            return;
+        }
+        String sql = "SELECT membership_id, user_id, membership_type, price, purchased_at "
+            + "FROM memberships "
+            + "WHERE purchased_at >= date_trunc('year', CURRENT_DATE) "
+            + "AND purchased_at < date_trunc('year', CURRENT_DATE) + INTERVAL '1 year' "
+            + "ORDER BY purchased_at, membership_id";
+        Path reportFile;
+        try {
+            Files.createDirectories(REPORTS_DIR);
+            reportFile = REPORTS_DIR.resolve(MEMBERSHIP_REPORT_FILE);
+        } catch (IOException e) {
+            CustomLogger.logError("Failed to create /reports/ directory.", e);
+            System.err.println("Error creating reports directory: " + e.getMessage());
+            return;
+        }
+        try (BufferedWriter writer = Files.newBufferedWriter(reportFile);
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            double totalRevenue = 0;
+            writer.write("Membership Revenue Report");
+            writer.newLine();
+            writer.write("Current calendar year");
+            writer.newLine();
+            writer.write("========================================");
+            writer.newLine();
+            while (resultSet.next()) {
+                int userId = resultSet.getInt("user_id");
+                String membershipType = resultSet.getString("membership_type");
+                double price = resultSet.getDouble("price");
+                totalRevenue += price;
+                writer.write(String.format("User ID: %d, Membership Type: %s, Price: $%.2f, Purchased: %s%n",
+                        userId, membershipType, price, resultSet.getTimestamp("purchased_at")));
+            }
+            writer.write("========================================");
+            writer.newLine();
+            writer.write(String.format("Total annual revenue: $%.2f%n", totalRevenue));
+
+            System.out.println("Membership report exported successfully to " + reportFile);
+            CustomLogger.logInfo("Admin override: " + requestingUser.getUsername() + " exported the membership report.");
+        } catch (IOException | SQLException e) {
+            CustomLogger.logError("Failed to export membership report.", e);
+            System.err.println("Error exporting membership report: " + e.getMessage());
+        }
+    }
+
+I used this method to create the report file and write the requested information into the /reports/ folder.
 
