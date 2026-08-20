@@ -53,9 +53,9 @@ INSERT INTO membership_plans (membership_type, price) VALUES
 
 -- The sample users all use "password" as their initial password.
 INSERT INTO users (username, password, email, phone_number, address, role) VALUES
-	('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'admin@gym.local', '555-0100', '1 Main Street', 'Admin'),
-	('trainer', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'trainer@gym.local', '555-0101', '2 Main Street', 'Trainer'),
-	('member', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'member@gym.local', '555-0102', '3 Main Street', 'Member');
+	('admin', '$2a$10$B1jfp0pq4ehg.JwqcGTfPOTQOK6pbagrXDhNH.uvizTmmbFz.fCyG', 'admin@gym.local', '555-0100', '1 Main Street', 'Admin'),
+	('trainer', '$2a$10$B1jfp0pq4ehg.JwqcGTfPOTQOK6pbagrXDhNH.uvizTmmbFz.fCyG', 'trainer@gym.local', '555-0101', '2 Main Street', 'Trainer'),
+	('member', '$2a$10$B1jfp0pq4ehg.JwqcGTfPOTQOK6pbagrXDhNH.uvizTmmbFz.fCyG', 'member@gym.local', '555-0102', '3 Main Street', 'Member');
 
 INSERT INTO memberships (user_id, membership_type, price, purchased_at) VALUES
 	((SELECT id FROM users WHERE username = 'member'), 'Monthly', 49.99, CURRENT_TIMESTAMP),

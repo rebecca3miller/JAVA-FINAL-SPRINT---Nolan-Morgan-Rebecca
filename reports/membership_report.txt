@@ -1,0 +1,7 @@
+Membership Revenue Report
+Current calendar year
+========================================
+User ID: 3, Membership Type: Monthly, Price: $49.99, Purchased: 2026-08-20 15:17:06.573223
+User ID: 2, Membership Type: Annual, Price: $499.99, Purchased: 2026-08-20 15:17:06.573223
+========================================
+Total annual revenue: $549.98

@@ -1,0 +1,7 @@
+Merchandise Inventory Report
+========================================
+Item: Protein Bar, Price: $3.99, Stock: 25, Value: $99.75
+Item: Electrolyte Drink, Price: $2.49, Stock: 30, Value: $74.70
+Item: Gym Towel, Price: $14.99, Stock: 15, Value: $224.85
+========================================
+Total inventory valuation: $399.30
