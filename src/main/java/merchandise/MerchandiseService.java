@@ -35,9 +35,27 @@ public class MerchandiseService {
         return merchandiseDAO.getInventoryValue();
     }
 
+    public void displayInventory(User requestingUser) throws IOException {
+        Authorization.requireRole(requestingUser, "view merchandise stock and total valuation", "Admin");
+        List<Merchandise> merchandiseList = merchandiseDAO.getAllMerchandise();
+
+        System.out.println("Merchandise Inventory:");
+        for (Merchandise merchandise : merchandiseList) {
+            System.out.printf("ID: %d, Name: %s, Type: %s, Price: $%.2f, Stock: %d%n",
+                    merchandise.getMerchandiseId(), merchandise.getName(), merchandise.getItemType(),
+                    merchandise.getPrice(), merchandise.getStock());
+        }
+        System.out.printf("Total inventory valuation: $%.2f%n", merchandiseDAO.getInventoryValue());
+    }
+
     public void updateStock(User requestingUser, int merchandiseId, int newStock) throws IOException {
         Authorization.requireRole(requestingUser, "update merchandise stock", "Admin");
         merchandiseDAO.updateStock(merchandiseId, newStock);
+    }
+
+    public void updatePrice(User requestingUser, int merchandiseId, double newPrice) throws IOException {
+        Authorization.requireRole(requestingUser, "update merchandise prices", "Admin");
+        merchandiseDAO.updatePrice(merchandiseId, newPrice);
     }
 
     public void browseMerchandise(User requestingUser) throws IOException {

@@ -1,10 +1,10 @@
-
 package membership;
 
 import user.Authorization;
 import user.User;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class MembershipService {
 
@@ -16,7 +16,19 @@ public class MembershipService {
 
     public void purchaseMembership(User requestingUser, Membership membership) throws IOException {
         Authorization.requireRole(requestingUser, "purchase a gym membership", "Trainer", "Member");
+        if (membership == null || membership.getUserId() != requestingUser.getId()) {
+            throw new IOException("A membership purchase must belong to the signed-in user.");
+        }
+        Double price = getAvailableMembershipPlans().get(membership.getMembershipType());
+        if (price == null) {
+            throw new IOException("Choose one of the available membership plans.");
+        }
+        membership.setPrice(price);
         membershipDAO.addMembership(membership);
+    }
+
+    public Map<String, Double> getAvailableMembershipPlans() throws IOException {
+        return membershipDAO.getMembershipPlans();
     }
 
     public void displayUserExpenses(User requestingUser, int userId) throws IOException {

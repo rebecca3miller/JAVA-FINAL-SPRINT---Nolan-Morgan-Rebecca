@@ -1,4 +1,3 @@
-
 package merchandise;
 
 public class Merchandise {

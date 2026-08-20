@@ -1,7 +1,9 @@
-Notes.md
-
 # Java compiled classes
 *.class
 
 # Maven build output
 target/
+
+# Runtime logs and local test output
+app.log
+**/test/

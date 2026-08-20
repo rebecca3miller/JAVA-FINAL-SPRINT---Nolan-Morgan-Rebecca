@@ -17,6 +17,13 @@ public class WorkoutClassService {
 
     public void createWorkoutClass(User requestingUser, WorkoutClass workoutClass) throws IOException {
         Authorization.requireRole(requestingUser, "create workout classes", "Admin", "Trainer");
+        if (workoutClass == null) {
+            throw new IOException("Workout class details are required.");
+        }
+        if ("Trainer".equals(requestingUser.getRole())
+                && requestingUser.getId() != workoutClass.getTrainerId()) {
+            throw new IOException("Trainers can only create their own workout classes.");
+        }
         workoutClassDAO.addWorkoutClass(workoutClass);
     }
 

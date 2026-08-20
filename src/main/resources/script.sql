@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS merchandise CASCADE;
 DROP TABLE IF EXISTS workout_classes CASCADE;
 DROP TABLE IF EXISTS memberships CASCADE;
+DROP TABLE IF EXISTS membership_plans CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
 CREATE TABLE users (
@@ -21,6 +22,12 @@ CREATE TABLE memberships (
 	purchased_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE membership_plans (
+	plan_id SERIAL PRIMARY KEY,
+	membership_type VARCHAR(50) NOT NULL UNIQUE,
+	price NUMERIC(10, 2) NOT NULL CHECK (price >= 0)
+);
+
 CREATE TABLE workout_classes (
 	class_id SERIAL PRIMARY KEY,
 	trainer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -39,6 +46,10 @@ CREATE TABLE merchandise (
 
 CREATE INDEX memberships_user_id_idx ON memberships(user_id);
 CREATE INDEX workout_classes_trainer_id_idx ON workout_classes(trainer_id);
+
+INSERT INTO membership_plans (membership_type, price) VALUES
+	('Monthly', 49.99),
+	('Annual', 499.99);
 
 -- The sample users all use "password" as their initial password.
 INSERT INTO users (username, password, email, phone_number, address, role) VALUES

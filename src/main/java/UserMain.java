@@ -1,14 +1,14 @@
 import database.DatabaseConnection;
+import export.reportExport;
 import membership.Membership;
 import membership.MembershipDAO;
 import membership.MembershipService;
 import merchandise.Merchandise;
 import merchandise.MerchandiseDAO;
 import merchandise.MerchandiseService;
-import user.Admin;
+import logger.CustomLogger;
 import user.Authorization;
 import user.Member;
-import user.Trainer;
 import user.User;
 import user.UserService;
 import workout.WorkoutClass;
@@ -26,9 +26,13 @@ public class UserMain {
         try {
             UserService userService = new UserService();
             Connection connection = DatabaseConnection.getConnection();
-            MembershipService membershipService = new MembershipService(new MembershipDAO(connection));
+            MembershipDAO membershipDAO = new MembershipDAO(connection);
+            MerchandiseDAO merchandiseDAO = new MerchandiseDAO(connection);
+            MembershipService membershipService = new MembershipService(membershipDAO);
             WorkoutClassService workoutClassService = new WorkoutClassService(new WorkoutClassDAO(connection));
-            MerchandiseService merchandiseService = new MerchandiseService(new MerchandiseDAO(connection));
+            MerchandiseService merchandiseService = new MerchandiseService(merchandiseDAO);
+            reportExport reportExportService = new reportExport(connection);
+            CustomLogger.logInfo("System startup completed.");
             Scanner scanner = new Scanner(System.in);
 
             boolean running = true;
@@ -44,7 +48,7 @@ public class UserMain {
                     case 1:
                         User loggedInUser = loginMenu(userService, scanner);
                         if (loggedInUser != null) {
-                            showRoleMenu(loggedInUser, userService, membershipService, workoutClassService, merchandiseService, scanner);
+                            showRoleMenu(loggedInUser, userService, membershipService, workoutClassService, merchandiseService, reportExportService, scanner);
                         }
                         break;
                     case 2:
@@ -60,6 +64,7 @@ public class UserMain {
             }
             scanner.close();
         } catch (IOException e) {
+            CustomLogger.logError("System startup failed.", e);
             System.out.println("Startup failed: " + e.getMessage());
         }
     }
@@ -92,24 +97,8 @@ public class UserMain {
             String phoneNumber = scanner.nextLine();
             System.out.print("Enter address: ");
             String address = scanner.nextLine();
-            System.out.print("Enter role (Admin, Trainer, Member): ");
-            String role = scanner.nextLine().trim();
-
-            User user;
-            switch (role) {
-                case "Admin":
-                    user = new Admin(username, password, email, phoneNumber, address);
-                    break;
-                case "Trainer":
-                    user = new Trainer(username, password, email, phoneNumber, address);
-                    break;
-                case "Member":
-                    user = new Member(username, password, email, phoneNumber, address);
-                    break;
-                default:
-                    System.out.println("Invalid role selected.");
-                    return;
-            }
+            System.out.println("New accounts are registered as Member.");
+            User user = new Member(username, password, email, phoneNumber, address);
 
             userService.createUser(user);
         } catch (IOException e) {
@@ -122,6 +111,7 @@ public class UserMain {
                                     MembershipService membershipService,
                                     WorkoutClassService workoutClassService,
                                     MerchandiseService merchandiseService,
+                                    reportExport reportExportService,
                                     Scanner scanner) {
         boolean loggedIn = true;
         while (loggedIn) {
@@ -146,7 +136,7 @@ public class UserMain {
             }
 
             String selectedAction = actions.get(choice - 1);
-            executeRoleAction(currentUser, selectedAction, userService, membershipService, workoutClassService, merchandiseService, scanner);
+            executeRoleAction(currentUser, selectedAction, userService, membershipService, workoutClassService, merchandiseService, reportExportService, scanner);
         }
     }
 
@@ -156,6 +146,7 @@ public class UserMain {
                                          MembershipService membershipService,
                                          WorkoutClassService workoutClassService,
                                          MerchandiseService merchandiseService,
+                                         reportExport reportExportService,
                                          Scanner scanner) {
         try {
             switch (action) {
@@ -173,8 +164,14 @@ public class UserMain {
                 case "add_merchandise":
                     addMerchandiseMenu(currentUser, merchandiseService, scanner);
                     break;
+                case "update_merchandise_price":
+                    updateMerchandisePriceMenu(currentUser, merchandiseService, scanner);
+                    break;
+                case "restock_merchandise":
+                    restockMerchandiseMenu(currentUser, merchandiseService, scanner);
+                    break;
                 case "view_inventory":
-                    System.out.println("Inventory value: $" + merchandiseService.getInventoryValue(currentUser));
+                    merchandiseService.displayInventory(currentUser);
                     break;
                 case "manage_classes":
                     workoutClassMenu(currentUser, workoutClassService, scanner);
@@ -186,13 +183,16 @@ public class UserMain {
                     purchaseMembershipMenu(currentUser, membershipService, scanner);
                     break;
                 case "browse_merchandise":
-                    merchandiseService.browseMerchandise(currentUser);
+                    merchandiseMenu(currentUser, merchandiseService, scanner);
                     break;
                 case "browse_classes":
                     workoutClassService.browseClasses(currentUser);
                     break;
                 case "view_own_expenses":
                     membershipService.displayUserExpenses(currentUser, currentUser.getId());
+                    break;
+                case "export_reports":
+                    exportReportsMenu(currentUser, reportExportService, scanner);
                     break;
                 default:
                     System.out.println("This action is not available for your role.");
@@ -224,16 +224,65 @@ public class UserMain {
     }
 
     private static void purchaseMembershipMenu(User currentUser, MembershipService membershipService, Scanner scanner) throws IOException {
+        System.out.println("Membership plans:");
+        membershipService.getAvailableMembershipPlans().forEach((type, price) ->
+            System.out.printf("%s ($%.2f)%n", type, price));
         System.out.print("Membership type: ");
         String membershipType = scanner.nextLine();
-        System.out.print("Price: ");
-        double price = Double.parseDouble(scanner.nextLine());
 
         Membership membership = new Membership();
         membership.setUserId(currentUser.getId());
         membership.setMembershipType(membershipType);
-        membership.setPrice(price);
         membershipService.purchaseMembership(currentUser, membership);
+    }
+
+    private static void merchandiseMenu(User currentUser, MerchandiseService merchandiseService, Scanner scanner) throws IOException {
+        merchandiseService.browseMerchandise(currentUser);
+        System.out.print("Would you like to purchase merchandise? (y/n): ");
+        if (!scanner.nextLine().trim().equalsIgnoreCase("y")) {
+            return;
+        }
+
+        System.out.print("Merchandise ID: ");
+        int merchandiseId = readInt(scanner);
+        System.out.print("Quantity: ");
+        int quantity = readInt(scanner);
+        merchandiseService.purchaseMerchandise(currentUser, merchandiseId, quantity);
+    }
+
+    private static void updateMerchandisePriceMenu(User currentUser, MerchandiseService merchandiseService, Scanner scanner) throws IOException {
+        System.out.print("Merchandise ID: ");
+        int merchandiseId = readInt(scanner);
+        System.out.print("New price: ");
+        double newPrice = Double.parseDouble(scanner.nextLine());
+        merchandiseService.updatePrice(currentUser, merchandiseId, newPrice);
+    }
+
+    private static void exportReportsMenu(User currentUser, reportExport reportExportService, Scanner scanner) throws IOException {
+        System.out.println("Export Reports to File");
+        System.out.println("1. Merchandise Inventory Report");
+        System.out.println("2. Membership Revenue Report");
+        System.out.print("Select an option: ");
+
+        int option = readInt(scanner);
+        switch (option) {
+            case 1:
+                reportExportService.getMerchandiseReport(currentUser);
+                break;
+            case 2:
+                reportExportService.getMembershipReport(currentUser);
+                break;
+            default:
+                System.out.println("Invalid option. Please try again.");
+        }
+    }
+
+    private static void restockMerchandiseMenu(User currentUser, MerchandiseService merchandiseService, Scanner scanner) throws IOException {
+        System.out.print("Merchandise ID: ");
+        int merchandiseId = readInt(scanner);
+        System.out.print("New stock level: ");
+        int newStock = readInt(scanner);
+        merchandiseService.updateStock(currentUser, merchandiseId, newStock);
     }
 
     private static void workoutClassMenu(User currentUser, WorkoutClassService workoutClassService, Scanner scanner) throws IOException {

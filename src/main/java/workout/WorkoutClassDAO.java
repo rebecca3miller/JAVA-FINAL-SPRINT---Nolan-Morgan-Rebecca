@@ -1,6 +1,9 @@
 
 package workout;
 
+import logger.CustomLogger;
+
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,37 +19,34 @@ public class WorkoutClassDAO {
         this.connection = connection;
     }
 
-    public void addWorkoutClass(WorkoutClass workoutClass) {
+    public void addWorkoutClass(WorkoutClass workoutClass) throws IOException {
 
-        String sql = "INSERT INTO workout_classes " + 
-                     "(class_id, trainer_id, description, schedule) " +
-                     "VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO workout_classes " +
+                 "(trainer_id, description, schedule) " +
+                 "VALUES (?, ?, ?)";
 
-        try {
-                PreparedStatement statement = connection.prepareStatement(sql);
-                statement.setInt(1, workoutClass.getClassId());
-                statement.setInt(2, workoutClass.getTrainerId());
-                statement.setString(3, workoutClass.getDescription());
-                statement.setString(4, workoutClass.getSchedule());
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, workoutClass.getTrainerId());
+                statement.setString(2, workoutClass.getDescription());
+                statement.setString(3, workoutClass.getSchedule());
 
                 statement.executeUpdate();
 
                 System.out.println("Workout class added successfully.");
 
         } catch (SQLException e) {
-            System.out.println("Error adding workout class: ");
-            System.out.println(e.getMessage());
+            CustomLogger.logError("Database transaction error while adding a workout class.", e);
+            throw new IOException("Error adding workout class.", e);
         }
     }
 
-    public List<WorkoutClass> getAllWorkoutClasses() {
+    public List<WorkoutClass> getAllWorkoutClasses() throws IOException {
         List<WorkoutClass> workoutClasses = new ArrayList<>();
 
         String sql = "SELECT * FROM workout_classes";
 
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet resultSet = statement.executeQuery();
+           try (PreparedStatement statement = connection.prepareStatement(sql);
+               ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
                 
@@ -61,22 +61,21 @@ public class WorkoutClassDAO {
             }
 
         } catch (SQLException e) {
-            System.out.println("Error retrieving workout classes: ");
-            System.out.println(e.getMessage());
+            CustomLogger.logError("Database transaction error while retrieving workout classes.", e);
+            throw new IOException("Error retrieving workout classes.", e);
         }
 
         return workoutClasses;
     }
 
-    public List<WorkoutClass> getWorkoutClassesByTrainerId(int trainerId) {
+    public List<WorkoutClass> getWorkoutClassesByTrainerId(int trainerId) throws IOException {
         List<WorkoutClass> workoutClasses = new ArrayList<>();
 
         String sql = "SELECT * FROM workout_classes WHERE trainer_id = ?";
 
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, trainerId);
-            ResultSet result = statement.executeQuery();
+            try (ResultSet result = statement.executeQuery()) {
 
             while (result.next()) {
                 
@@ -89,23 +88,23 @@ public class WorkoutClassDAO {
 
                 workoutClasses.add(workoutClass);
             }
+            }
 
         } catch (SQLException e) {
-            System.out.println("Error retrieving workout classes by trainer ID: ");
-            System.out.println(e.getMessage());
+            CustomLogger.logError("Database transaction error while retrieving trainer workout classes.", e);
+            throw new IOException("Error retrieving trainer workout classes.", e);
         }
 
         return workoutClasses;
     }
 
-    public void updateWorkoutClass(WorkoutClass workoutClass) {
+    public void updateWorkoutClass(WorkoutClass workoutClass) throws IOException {
         
         String sql = "UPDATE workout_classes " + 
                      "SET trainer_id = ?, description = ?, schedule = ? " + 
                      "WHERE class_id = ?";
 
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setInt(1, workoutClass.getTrainerId());
             statement.setString(2, workoutClass.getDescription());
@@ -118,18 +117,17 @@ public class WorkoutClassDAO {
 
 
         } catch (SQLException e) {
-            System.out.println("Error updating workout class: ");
-            System.out.println(e.getMessage());
+            CustomLogger.logError("Database transaction error while updating a workout class.", e);
+            throw new IOException("Error updating workout class.", e);
         }
     }
 
 
-    public void deleteWorkoutClass(int classId) {
+    public void deleteWorkoutClass(int classId) throws IOException {
         
         String sql = "DELETE FROM workout_classes WHERE class_id = ?";
 
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, classId);
 
             statement.executeUpdate();
@@ -137,8 +135,8 @@ public class WorkoutClassDAO {
             System.out.println("Workout class deleted successfully.");
 
         } catch (SQLException e) {
-            System.out.println("Error deleting workout class: ");
-            System.out.println(e.getMessage());
+            CustomLogger.logError("Database transaction error while deleting a workout class.", e);
+            throw new IOException("Error deleting workout class.", e);
         }
     }
 

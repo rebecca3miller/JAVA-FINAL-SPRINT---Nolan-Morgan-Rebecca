@@ -1,6 +1,9 @@
 
 package merchandise;
 
+import logger.CustomLogger;
+
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,7 +19,7 @@ public class MerchandiseDAO {
         this.connection = connection;
     }
 
-    public void addMerchandise(Merchandise merchandise) {
+    public void addMerchandise(Merchandise merchandise) throws IOException {
         String sql = "INSERT INTO merchandise (name, description, item_type, price, stock) VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -29,12 +32,12 @@ public class MerchandiseDAO {
             statement.executeUpdate();
             System.out.println("Merchandise added successfully.");
         } catch (SQLException e) {
-            System.out.println("Error adding merchandise: ");
-            System.out.println(e.getMessage());
+            CustomLogger.logError("Database transaction error while adding merchandise.", e);
+            throw new IOException("Error adding merchandise.", e);
         }
     }
 
-    public List<Merchandise> getAllMerchandise() {
+    public List<Merchandise> getAllMerchandise() throws IOException {
         List<Merchandise> merchandiseList = new ArrayList<>();
         String sql = "SELECT * FROM merchandise";
 
@@ -54,14 +57,17 @@ public class MerchandiseDAO {
                 merchandiseList.add(merchandise);
             }
         } catch (SQLException e) {
-            System.out.println("Error retrieving merchandise: ");
-            System.out.println(e.getMessage());
+            CustomLogger.logError("Database transaction error while retrieving merchandise.", e);
+            throw new IOException("Error retrieving merchandise.", e);
         }
 
         return merchandiseList;
     }
 
-    public void updateStock(int merchandiseId, int newStock) {
+    public void updateStock(int merchandiseId, int newStock) throws IOException {
+        if (newStock < 0) {
+            throw new IOException("Stock cannot be negative.");
+        }
         String sql = "UPDATE merchandise SET stock = ? WHERE merchandise_id = ?";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -70,12 +76,29 @@ public class MerchandiseDAO {
             statement.executeUpdate();
             System.out.println("Stock updated successfully.");
         } catch (SQLException e) {
-            System.out.println("Error updating stock: ");
-            System.out.println(e.getMessage());
+            CustomLogger.logError("Database transaction error while updating merchandise stock.", e);
+            throw new IOException("Error updating merchandise stock.", e);
         }
     }
 
-    public double getInventoryValue() {
+    public void updatePrice(int merchandiseId, double newPrice) throws IOException {
+        if (newPrice < 0) {
+            throw new IOException("Price cannot be negative.");
+        }
+        String sql = "UPDATE merchandise SET price = ? WHERE merchandise_id = ?";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDouble(1, newPrice);
+            statement.setInt(2, merchandiseId);
+            statement.executeUpdate();
+            System.out.println("Price updated successfully.");
+        } catch (SQLException e) {
+            CustomLogger.logError("Database transaction error while updating merchandise price.", e);
+            throw new IOException("Error updating merchandise price.", e);
+        }
+    }
+
+    public double getInventoryValue() throws IOException {
         double total = 0;
         String sql = "SELECT COALESCE(SUM(price * stock), 0) FROM merchandise";
 
@@ -85,19 +108,22 @@ public class MerchandiseDAO {
                 total = result.getDouble(1);
             }
         } catch (SQLException e) {
-            System.out.println("Error retrieving inventory value: ");
-            System.out.println(e.getMessage());
+            CustomLogger.logError("Database transaction error while retrieving inventory value.", e);
+            throw new IOException("Error retrieving inventory value.", e);
         }
 
         return total;
     }
 
-    public void purchaseMerchandise(int merchandiseId, int quantity) {
+    public void purchaseMerchandise(int merchandiseId, int quantity) throws IOException {
+        if (quantity <= 0) {
+            throw new IOException("Purchase quantity must be greater than zero.");
+        }
         String sql = "SELECT stock, price FROM merchandise WHERE merchandise_id = ?";
 
         try (PreparedStatement checkStatement = connection.prepareStatement(sql)) {
             checkStatement.setInt(1, merchandiseId);
-            ResultSet result = checkStatement.executeQuery();
+            try (ResultSet result = checkStatement.executeQuery()) {
 
             if (result.next()) {
                 int stock = result.getInt("stock");
@@ -121,9 +147,10 @@ public class MerchandiseDAO {
             } else {
                 System.out.println("Merchandise not found.");
             }
+            }
         } catch (SQLException e) {
-            System.out.println("Error purchasing merchandise: ");
-            System.out.println(e.getMessage());
+            CustomLogger.logError("Database transaction error while purchasing merchandise.", e);
+            throw new IOException("Error purchasing merchandise.", e);
         }
     }
 }

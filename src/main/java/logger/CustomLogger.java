@@ -1,34 +1,38 @@
 package logger;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public final class CustomLogger {
     private static final String LOG_FILE = "app.log";
+    private static final Logger LOGGER = Logger.getLogger(CustomLogger.class.getName());
+
+    static {
+        LOGGER.setUseParentHandlers(false);
+        try {
+            FileHandler fileHandler = new FileHandler(LOG_FILE, true);
+            fileHandler.setFormatter(new SimpleFormatter());
+            LOGGER.addHandler(fileHandler);
+        } catch (IOException | SecurityException exception) {
+            System.err.println("Error configuring log file: " + exception.getMessage());
+        }
+    }
 
     private CustomLogger() {
     }
 
     public static void logInfo(String message) {
-        write("Info: " + message);
+        LOGGER.info(message);
     }
 
     public static void logError(String message, Exception exception) {
-        String details = exception == null ? "" : " - " + exception.getMessage();
-        write("Error: " + message + details);
+        LOGGER.log(Level.SEVERE, message, exception);
     }
 
     public static void log(String message) {
         logInfo(message);
-    }
-
-    private static void write(String message) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(LOG_FILE, true))) {
-            writer.write(message);
-            writer.newLine();
-        } catch (IOException exception) {
-            System.err.println("Error writing to log file: " + exception.getMessage());
-        }
     }
 }
